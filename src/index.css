@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Government / FIRS theme (CSS variables for use outside Tailwind) */
+:root {
+  --color-gov-primary: #1b5e20;
+  --color-gov-primary-dark: #0d3d12;
+  --color-gov-primary-light: #2e7d32;
+  --color-gov-accent: #388e3c;
+  --color-gov-muted: #4caf50;
+  --color-gov-surface: #e8f5e9;
+  --color-gov-border: #a5d6a7;
+  --color-gov-text: #1b2e1f;
+  --color-gov-text-muted: #2e4a32;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-slate-800 font-sans antialiased;
+  }
+}
+
+/* Auth layout: ensure gov colors apply (left panel green, right panel surface) */
+.auth-panel-left {
+  background-color: var(--color-gov-primary);
+}
+.auth-panel-left .auth-panel-text {
+  color: rgba(255, 255, 255, 0.95);
+}
+.auth-panel-left .auth-panel-text-muted {
+  color: var(--color-gov-surface);
+  opacity: 0.9;
+}
+.auth-panel-right {
+  background-color: var(--color-gov-surface);
+}
+
+/* Data table overrides for ERP look */
+.rdt_TableHeadRow {
+  @apply bg-slate-100 border-b border-surface-border font-semibold text-slate-700 text-xs uppercase tracking-wider;
+}
+.rdt_TableRow {
+  @apply border-b border-surface-border hover:bg-slate-50;
+}
+.rdt_Table {
+  @apply border border-surface-border rounded-lg overflow-hidden;
+}
