@@ -1,33 +1,54 @@
-import { useQuery } from '@tanstack/react-query'
-import { invoiceApi } from '../services/api'
-import type { InvoiceFilters } from '../types'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { einvoiceApi } from '../services/api'
+import type { ActionType } from '../types/api'
 
 export const invoiceKeys = {
-  all: ['invoices'] as const,
-  lists: () => [...invoiceKeys.all, 'list'] as const,
-  list: (filters?: InvoiceFilters) => [...invoiceKeys.lists(), filters] as const,
-  detail: (id: string) => [...invoiceKeys.all, 'detail', id] as const,
-  dashboard: () => [...invoiceKeys.all, 'dashboard'] as const,
+  all: ['einvoices'] as const,
+  actions: (type?: ActionType) => [...invoiceKeys.all, 'actions', type] as const,
+  logins: () => [...invoiceKeys.all, 'logins'] as const,
+  signings: () => [...invoiceKeys.all, 'signings'] as const,
 }
 
-export function useInvoices(filters?: InvoiceFilters) {
+export function useEinvoiceActions(type?: ActionType) {
   return useQuery({
-    queryKey: invoiceKeys.list(filters),
-    queryFn: () => invoiceApi.getInvoices(filters),
+    queryKey: invoiceKeys.actions(type),
+    queryFn: () => einvoiceApi.getActions(type),
   })
 }
 
-export function useInvoice(id: string | null) {
+export function useTaxpayerLogins() {
   return useQuery({
-    queryKey: invoiceKeys.detail(id ?? ''),
-    queryFn: () => invoiceApi.getInvoiceById(id!),
-    enabled: !!id,
+    queryKey: invoiceKeys.logins(),
+    queryFn: () => einvoiceApi.getTaxpayerLogins(),
   })
 }
 
-export function useDashboardStats() {
-  return useQuery({
-    queryKey: invoiceKeys.dashboard(),
-    queryFn: () => invoiceApi.getDashboardStats(),
-  })
+export function useValidateInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (invoice: any) => einvoiceApi.validate(invoice),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.all });
+    }
+  });
+}
+
+export function useReportInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: any) => einvoiceApi.report(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.all });
+    }
+  });
+}
+
+export function useSignInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: any) => einvoiceApi.sign(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.all });
+    }
+  });
 }

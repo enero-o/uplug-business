@@ -1,147 +1,118 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../../services/api'
 
 export function ResetPassword() {
-  const [searchParams] = useSearchParams()
-  const tokenFromUrl = searchParams.get('token') ?? ''
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const token = searchParams.get('token')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
     setError('')
-    if (password !== confirm) {
-      setError('Passwords do not match.')
-      return
-    }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
-    const token = tokenFromUrl || (document.querySelector('input[name="token"]') as HTMLInputElement)?.value
-    if (!token) {
-      setError('Missing reset token. Use the link from your email.')
-      return
-    }
     setLoading(true)
     try {
-      await authApi.resetPassword(token, password)
-      setSuccess(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Reset failed. The link may have expired.')
+      await authApi.resetPassword(token || '', password)
+      navigate('/login', { state: { message: 'Password reset successful! Please sign in.' } })
+    } catch (err: any) {
+      setError(err.message || 'Reset failed')
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="flex min-h-screen">
-      <div className="auth-panel-left hidden w-full max-w-[480px] flex-col justify-between p-10 lg:flex">
-        <div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 shadow-lg">
-            <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-8">
+        <div className="bg-white rounded-card shadow-premium border border-border p-10 text-center max-w-sm">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
-          <h2 className="auth-panel-text mt-8 text-2xl font-bold tracking-tight">
-            Set new password
+          <h1 className="text-2xl font-display font-bold text-primary">Invalid Token</h1>
+          <p className="mt-2 text-text-light font-medium">The reset link is missing or has expired. Please request a new one.</p>
+          <Link to="/forgot-password" className="mt-8 block w-full rounded-xl bg-primary-vibrant py-4 text-sm font-bold text-white shadow-premium transition-all hover:bg-primary-dark">Request New Link</Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen bg-surface font-sans">
+      <div className="relative hidden w-full max-w-[520px] lg:flex flex-col justify-between p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-primary-dark z-0" />
+        <div className="absolute inset-0 bg-gradient-mesh-green z-10 opacity-30" />
+        
+        <div className="relative z-20">
+          <h2 className="mt-20 text-4xl font-display font-bold text-white tracking-tight leading-loose">
+            Secure your <span className="text-accent underline decoration-accent/30 underline-offset-8">account.</span>
           </h2>
-          <p className="auth-panel-text-muted mt-2 text-base">
-            Choose a strong password for your business account.
+          <p className="mt-6 text-mint/80 text-lg max-w-sm font-light">
+            Choose a strong password to protect your business data and compliance logs.
           </p>
         </div>
-        <p className="auth-panel-text-muted text-sm">
-          <Link to="/login" className="font-medium text-white underline underline-offset-2 hover:no-underline">
-            Back to sign in
-          </Link>
-        </p>
       </div>
 
-      <div className="auth-panel-right flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[400px]">
-          <div className="rounded-2xl border border-gov-border bg-white p-8 shadow-xl">
-            {success ? (
-              <div className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gov-surface">
-                  <svg className="h-7 w-7 text-gov-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+      <div className="flex flex-1 items-center justify-center p-8 bg-surface">
+        <div className="w-full max-w-[440px]">
+          <div className="relative rounded-card bg-white p-10 shadow-premium border border-border overflow-hidden">
+            <div className="mb-10 text-center">
+              <h1 className="text-3xl font-display font-bold text-primary">Set New Password</h1>
+              <p className="mt-2 text-text-light font-medium">Create a new secure password for your portal</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+              {error && (
+                <div className="rounded-xl border border-red-100 bg-red-50/50 px-4 py-3 text-sm text-red-600">
+                  {error}
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-gov-text">Password updated</h1>
-                <p className="mt-2 text-sm text-gov-text-muted">
-                  You can now sign in with your new password.
-                </p>
-                <Link
-                  to="/login"
-                  className="mt-6 inline-block rounded-lg bg-gov-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-gov-primary-dark"
-                >
-                  Sign in
-                </Link>
+              )}
+              
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-semibold text-primary ml-1">
+                  New Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-primary placeholder-text-light/40 transition-all focus:border-accent focus:bg-white focus:outline-none focus:ring-4 focus:ring-accent/10"
+                  placeholder="••••••••"
+                />
               </div>
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold text-gov-text">New password</h1>
-                <p className="mt-1 text-sm text-gov-text-muted">
-                  Enter your new password below. Use at least 8 characters.
-                </p>
-                <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-                  {!tokenFromUrl && (
-                    <input type="hidden" name="token" value="" readOnly />
-                  )}
-                  {error && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                      {error}
-                    </div>
-                  )}
-                  <div>
-                    <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gov-text">
-                      New password
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      className="w-full rounded-lg border border-gov-border bg-white px-3 py-2.5 text-gov-text placeholder-gov-text-muted/60 focus:border-gov-accent focus:outline-none focus:ring-2 focus:ring-gov-accent/20"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-gov-text">
-                      Confirm password
-                    </label>
-                    <input
-                      id="confirm"
-                      type="password"
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      required
-                      minLength={8}
-                      className="w-full rounded-lg border border-gov-border bg-white px-3 py-2.5 text-gov-text placeholder-gov-text-muted/60 focus:border-gov-accent focus:outline-none focus:ring-2 focus:ring-gov-accent/20"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-lg bg-gov-primary py-3 text-sm font-semibold text-white shadow-md hover:bg-gov-primary-dark focus:outline-none focus:ring-2 focus:ring-gov-accent focus:ring-offset-2 disabled:opacity-60"
-                  >
-                    {loading ? 'Updating…' : 'Update password'}
-                  </button>
-                </form>
-                <p className="mt-6 text-center text-sm text-gov-text-muted">
-                  <Link to="/login" className="font-medium text-gov-accent hover:text-gov-primary">
-                    Back to sign in
-                  </Link>
-                </p>
-              </>
-            )}
+
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-semibold text-primary ml-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-primary placeholder-text-light/40 transition-all focus:border-accent focus:bg-white focus:outline-none focus:ring-4 focus:ring-accent/10"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-primary-vibrant py-4 text-sm font-bold text-white shadow-premium transition-all hover:bg-primary-dark hover:-translate-y-0.5 disabled:opacity-70"
+              >
+                {loading ? 'Updating password...' : 'Update Password'}
+              </button>
+            </form>
           </div>
         </div>
       </div>

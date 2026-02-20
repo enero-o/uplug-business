@@ -4,7 +4,7 @@ import { useAuthStore } from '../../store/authStore'
 import { authApi } from '../../services/api'
 
 export function Login() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,91 +17,111 @@ export function Login() {
     setError('')
     setLoading(true)
     try {
-      const res = await authApi.login(username, password)
-      const token = (res as { token?: string }).token ?? ''
-      const user = (res as { user?: { name: string; email: string } }).user ?? { name: username, email: username }
-      const onboarded = (res as { onboarded?: boolean }).onboarded ?? true
-      if (token) localStorage.setItem('auth_token', token)
-      setAuth(token, user, onboarded)
+      const res = await authApi.login({ email, password })
+      localStorage.setItem('auth_token', res.token)
+      localStorage.setItem('user_profile', JSON.stringify(res))
+      
+      const onboarded = !!res.businessProfile
+      setAuth(res.token, { name: res.email.split('@')[0], email: res.email }, onboarded)
       setOnboarded(onboarded)
+      
       if (onboarded) {
         navigate('/', { replace: true })
       } else {
         navigate('/onboarding', { replace: true })
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+    } catch (err: any) {
+      setError(err.message || 'Login failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left: branding panel - use auth-panel-left so gov green is always applied */}
-      <div className="auth-panel-left hidden w-full max-w-[480px] flex-col justify-between p-10 lg:flex">
-        <div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 shadow-lg">
-            <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    <div className="flex min-h-screen bg-surface font-sans">
+      {/* Left: Branding Panel */}
+      <div className="relative hidden w-full max-w-[520px] lg:flex flex-col justify-between p-12 overflow-hidden">
+        {/* Animated Background Mesh */}
+        <div className="absolute inset-0 bg-primary-dark z-0" />
+        <div className="absolute inset-0 bg-gradient-mesh-green z-10 opacity-40 animate-pulse" />
+        
+        <div className="relative z-20">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md shadow-premium border border-white/20">
+            <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h2 className="auth-panel-text mt-8 text-2xl font-bold tracking-tight">
-            Uplug Business
+          <h2 className="mt-10 text-4xl font-display font-bold text-white tracking-tight leading-tight">
+            Compliance made <span className="text-accent">effortless.</span>
           </h2>
-          <p className="auth-panel-text-muted mt-2 text-base">
-            E-Invoicing dashboard for FIRS-compliant businesses. Issue, track, and sync invoices in one place.
+          <p className="mt-6 text-mint/80 text-lg max-w-sm font-light">
+            Empowering businesses with seamless E-Invoicing solutions for FIRS and beyond.
           </p>
         </div>
-        <div className="space-y-4">
-          <div className="h-px w-16 bg-white/30" />
-          <p className="auth-panel-text-muted text-sm">
-            Secure sign-in with your business credentials. New to Uplug?{' '}
-            <Link to="/register" className="font-medium text-white underline underline-offset-2 hover:no-underline">
-              Get started
-            </Link>
+
+        <div className="relative z-20 space-y-6">
+          <div className="h-1 w-20 rounded-full bg-accent shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
+          <p className="text-white/60 text-sm">
+            Trusted by modern enterprises for cross-border tax compliance.
+            Join the network of certified businesses today.
           </p>
         </div>
       </div>
 
-      {/* Right: form */}
-      <div className="auth-panel-right flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[400px]">
-          <div className="rounded-2xl border border-gov-border bg-white p-8 shadow-xl">
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-gov-text">Sign in</h1>
-              <p className="mt-1 text-sm text-gov-text-muted">
-                Enter your username or email and password.
+      {/* Right: Login Form */}
+      <div className="flex flex-1 items-center justify-center p-8 bg-surface">
+        <div className="w-full max-w-[440px]">
+          <div className="relative rounded-card bg-white p-10 shadow-premium border border-border overflow-hidden">
+            {/* Decorative element */}
+            <div className="absolute top-0 right-0 -tr-1/4 w-32 h-32 bg-mint/20 rounded-full blur-3xl opacity-50" />
+            
+            <div className="mb-10 text-center">
+              <h1 className="text-3xl font-display font-bold text-primary">Welcome back</h1>
+              <p className="mt-2 text-text-light font-medium">
+                Enter your credentials to manage your business
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-5">
+
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                  {error}
+                <div className="rounded-xl border border-red-100 bg-red-50/50 backdrop-blur-sm px-4 py-3 text-sm text-red-600 animate-slide-in">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {error}
+                  </div>
                 </div>
               )}
-              <div>
-                <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-gov-text">
-                  Username / Email
+              
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-semibold text-primary ml-1">
+                  Email Address
                 </label>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-gov-border bg-white px-3 py-2.5 text-gov-text placeholder-gov-text-muted/60 focus:border-gov-accent focus:outline-none focus:ring-2 focus:ring-gov-accent/20"
-                  placeholder="you@company.com"
-                />
+                <div className="relative group">
+                   <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-primary placeholder-text-light/40 transition-all focus:border-accent focus:bg-white focus:outline-none focus:ring-4 focus:ring-accent/10"
+                    placeholder="name@company.com"
+                  />
+                  <div className="absolute inset-y-0 right-4 flex items-center opacity-0 group-focus-within:opacity-100 transition-opacity">
+                    <div className="h-2 w-2 rounded-full bg-accent animate-ping" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-medium text-gov-text">
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between ml-1">
+                  <label htmlFor="password" className="text-sm font-semibold text-primary">
                     Password
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-sm font-medium text-gov-accent hover:text-gov-primary"
+                    className="text-xs font-bold text-accent hover:text-accent-dark transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -112,27 +132,45 @@ export function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-gov-border bg-white px-3 py-2.5 text-gov-text placeholder-gov-text-muted/60 focus:border-gov-accent focus:outline-none focus:ring-2 focus:ring-gov-accent/20"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-primary placeholder-text-light/40 transition-all focus:border-accent focus:bg-white focus:outline-none focus:ring-4 focus:ring-accent/10"
                   placeholder="••••••••"
                 />
               </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-gov-primary py-3 text-sm font-semibold text-white shadow-md hover:bg-gov-primary-dark focus:outline-none focus:ring-2 focus:ring-gov-accent focus:ring-offset-2 disabled:opacity-60"
+                className="relative w-full overflow-hidden group rounded-xl bg-primary-vibrant py-4 text-sm font-bold text-white shadow-premium transition-all hover:bg-primary-dark hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-accent/20 disabled:opacity-70"
               >
-                {loading ? 'Signing in…' : 'Sign in'}
+                <div className="absolute inset-0 bg-gradient-emerald opacity-0 group-hover:opacity-20 transition-opacity" />
+                <span className="relative flex items-center justify-center gap-2">
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Authenticating...
+                    </>
+                  ) : (
+                    'Sign in to Dashboard'
+                  )}
+                </span>
               </button>
             </form>
-            <p className="mt-6 text-center text-sm text-gov-text-muted">
-              Don’t have an account?{' '}
-              <Link to="/register" className="font-medium text-gov-accent hover:text-gov-primary">
-                Register your business
-              </Link>
-            </p>
+
+            <div className="mt-10 pt-8 border-t border-border">
+              <p className="text-center text-sm text-text-light font-medium">
+                New to Uplug Business?{' '}
+                <Link to="/register" className="font-bold text-accent hover:text-accent-dark transition-colors">
+                  Create an account
+                </Link>
+              </p>
+            </div>
           </div>
-          <p className="mt-6 text-center text-xs text-gov-text-muted/80">
-            Use your portal credentials. Backend may run on port 8080.
+          
+          <p className="mt-8 text-center text-xs text-text-light/60 font-medium">
+            Secure, encrypted connection by AARC. &copy; 2026 Uplug Inc.
           </p>
         </div>
       </div>

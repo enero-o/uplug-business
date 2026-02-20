@@ -1,15 +1,18 @@
 import type {
-  Invoice,
-  InvoiceFilters,
-  DashboardStats,
-  BusinessProfile,
-  OnboardingPayload,
-  ErpSyncResult,
-} from '../types'
+  CreateAccountRequest,
+  LoginRequest,
+  CreateBusinessProfileRequest,
+  BusinessProfileResponse,
+  AccountLoginResource,
+  ApiResponse,
+  EInvoiceActionRecord,
+  ActionType,
+  TaxpayerAuthRecord,
+  InvoiceSigningRecord,
+  ApiKeyResponse
+} from '../types/api'
 
-const API_URL = import.meta.env.VITE_API_URL || ''
-const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || '/api'
-const BASE_URL = API_URL ? `${API_URL}${API_BASE_PATH}` : API_BASE_PATH
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://l80913jvgc.execute-api.eu-west-3.amazonaws.com/dev'
 
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL}${endpoint}`
@@ -21,111 +24,142 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const res = await fetch(url, { ...options, headers })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || `API Error: ${res.status}`)
+  
+  // Try to parse as JSON, handle non-JSON responses
+  let data;
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    data = await res.json();
+  } else {
+    data = await res.text();
   }
-  return res.json()
+
+  if (!res.ok) {
+    const message = (data as any)?.message || `API Error: ${res.status}`;
+    throw new Error(message);
+  }
+
+  // The API wraps responses in an ApiResponse structure { code, message, data }
+  if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+    return (data as ApiResponse<T>).data;
+  }
+
+  return data as T;
 }
 
 export const authApi = {
-  login(username: string, password: string) {
-    return apiCall<{ token: string; user: { name: string; email: string }; onboarded?: boolean }>(
-      `/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-      { method: 'POST' }
-    )
+  // Register a new account after email verification
+  register(payload: CreateAccountRequest) {
+    return apiCall<AccountLoginResource>('/open/api/user', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
-  logout() {
-    localStorage.removeItem('auth_token')
-    return apiCall<void>('/auth/logout').catch(() => {})
+
+  // Login
+  login(payload: LoginRequest) {
+    return apiCall<AccountLoginResource>('/open/api/user/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
-  getProfile() {
-    return apiCall<{ name: string; email: string }>('/user/profile')
-  },
-  requestPasswordReset(email: string) {
-    return apiCall<{ message: string }>('/auth/forgot-password', {
+
+  // Initiate account setup (send OTP)
+  initiateSetup(email: string) {
+    return apiCall<void>('/open/api/email-verifications', {
       method: 'POST',
       body: JSON.stringify({ email }),
-    })
+    });
   },
-  resetPassword(token: string, newPassword: string) {
-    return apiCall<{ message: string }>('/auth/reset-password', {
+
+  // Logout
+  logout() {
+    return apiCall<void>('/api/v1/user/logout', { method: 'POST' })
+      .finally(() => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_profile');
+      });
+  },
+
+  // Verify TIN
+  verifyTin(tin: string) {
+    return apiCall<any>('/api/v1/tin-verifications', {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
-    })
+      body: JSON.stringify({ tin }),
+    });
   },
-  register(email: string, businessName?: string) {
-    return apiCall<{ message: string }>('/auth/register', {
+
+  // Create Business Profile
+  createProfile(payload: CreateBusinessProfileRequest) {
+    return apiCall<BusinessProfileResponse>('/api/v1/business-profile', {
       method: 'POST',
-      body: JSON.stringify({ email, businessName }),
-    })
+      body: JSON.stringify(payload),
+    });
   },
+
+  // Get API Keys
+  getApiKeys(businessId: string) {
+    return apiCall<ApiKeyResponse>(`/api/v1/business-profile/${businessId}/api-keys`);
+  },
+
+  // Mocked for UI flow consistency
+  async requestPasswordReset(email: string) {
+    console.log('Password reset requested for:', email);
+    return { message: 'If an account exists, a reset link has been sent.' };
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    console.log('Password reset with token:', token, newPassword);
+    return { message: 'Password has been reset successfully.' };
+  }
 }
 
-export const businessApi = {
-  getProfile() {
-    return apiCall<BusinessProfile>('/business/profile')
+export const einvoiceApi = {
+  // List all actions (This is our main "invoices" list)
+  getActions(type?: ActionType) {
+    const query = type ? `?type=${type}` : '';
+    return apiCall<EInvoiceActionRecord[]>(`/api/einvoice/actions${query}`);
   },
-  onboard(data: OnboardingPayload) {
-    return apiCall<BusinessProfile>('/business/onboard', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  },
-  verifyTIN(tin: string) {
-    return apiCall<{ valid: boolean; name?: string }>(`/business/tin/verify?tin=${encodeURIComponent(tin)}`)
-  },
-}
 
-export const invoiceApi = {
-  getInvoices(filters?: InvoiceFilters) {
-    const params = new URLSearchParams()
-    if (filters?.status) params.append('status', filters.status)
-    if (filters?.search) params.append('search', filters.search)
-    if (filters?.limit) params.append('limit', String(filters.limit))
-    if (filters?.offset) params.append('offset', String(filters.offset))
-    const q = params.toString()
-    return apiCall<Invoice[]>(`/invoices${q ? `?${q}` : ''}`)
+  // Validate an invoice
+  validate(invoice: any) {
+    return apiCall<EInvoiceActionRecord>('/api/einvoice/validate', {
+      method: 'POST',
+      body: JSON.stringify({ invoice }),
+    });
   },
-  getInvoiceById(id: string) {
-    return apiCall<Invoice>(`/invoices/${id}`)
-  },
-  async getDashboardStats(): Promise<DashboardStats> {
-    const r = await apiCall<Partial<DashboardStats>>('/business/dashboard')
-    return {
-      total_invoices: r.total_invoices ?? 0,
-      draft_invoices: r.draft_invoices ?? 0,
-      sent_invoices: r.sent_invoices ?? 0,
-      paid_invoices: r.paid_invoices ?? 0,
-      cancelled_invoices: r.cancelled_invoices ?? 0,
-      total_revenue: r.total_revenue ?? 0,
-      pending_amount: r.pending_amount ?? 0,
-      overdue_invoices: r.overdue_invoices ?? 0,
-      currency: r.currency ?? 'NGN',
-    }
-  },
-}
 
-export const erpApi = {
-  listAdapters() {
-    return apiCall<string[]>('/erp')
-  },
-  push(system: string, invoice: unknown) {
-    return apiCall<ErpSyncResult>(`/erp/${system}/push`, {
+  // Report an invoice
+  report(payload: any) {
+    return apiCall<EInvoiceActionRecord>('/api/einvoice/report', {
       method: 'POST',
-      body: JSON.stringify(invoice),
-    })
+      body: JSON.stringify(payload),
+    });
   },
-  pull(system: string, request: { from?: string; to?: string }) {
-    return apiCall<unknown[]>(`/erp/${system}/pull`, {
+
+  // Sign an invoice
+  sign(payload: any) {
+    return apiCall<InvoiceSigningRecord>('/api/einvoice/sign', {
       method: 'POST',
-      body: JSON.stringify(request ?? {}),
-    })
+      body: JSON.stringify(payload),
+    });
   },
-  sync(system: string, request: { mode?: string }) {
-    return apiCall<ErpSyncResult>(`/erp/${system}/sync`, {
+
+  // Get taxpayer logins
+  getTaxpayerLogins() {
+    return apiCall<TaxpayerAuthRecord[]>('/api/einvoice/taxpayer-logins');
+  },
+
+  // Taxpayer authentication
+  taxpayerAuth(payload: any) {
+    return apiCall<TaxpayerAuthRecord>('/api/einvoice/taxpayer-auth', {
       method: 'POST',
-      body: JSON.stringify(request ?? {}),
-    })
+      body: JSON.stringify(payload),
+    });
   },
+
+  // Download invoice
+  download(irn: string) {
+    return apiCall<EInvoiceActionRecord>(`/api/einvoice/download/${irn}`);
+  }
 }

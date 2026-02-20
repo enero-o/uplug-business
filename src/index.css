@@ -2,48 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Government / FIRS theme (CSS variables for use outside Tailwind) */
 :root {
-  --color-gov-primary: #1b5e20;
-  --color-gov-primary-dark: #0d3d12;
-  --color-gov-primary-light: #2e7d32;
-  --color-gov-accent: #388e3c;
-  --color-gov-muted: #4caf50;
-  --color-gov-surface: #e8f5e9;
-  --color-gov-border: #a5d6a7;
-  --color-gov-text: #1b2e1f;
-  --color-gov-text-muted: #2e4a32;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  /* Premium Emerald & Slate Palette - Optimized for Vibrancy */
+  --color-primary: #064e3b; /* Deep Forest Green */
+  --color-primary-dark: #022c22;
+  --color-primary-vibrant: #065f46; /* More vibrant dark green requested by user */
+  
+  --color-accent: #10b981; /* Vibrant Emerald */
+  --color-accent-light: #34d399;
+  --color-accent-dark: #059669;
+  
+  --color-mint: #d1fae5;
+  --color-surface: #f8fafc;
+  --color-border: #e2e8f0;
+  
+  --color-text: #064e3b;
+  --color-text-muted: #334155;
+  --color-text-light: #64748b;
+
+  /* Global Font System */
+  --font-sans: "Inter", "Outfit", system-ui, -apple-system, sans-serif;
+  --font-display: "Bricolage Grotesque", "Inter", sans-serif;
+
+  /* Enhanced Gradients */
+  --gradient-emerald: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --gradient-mesh-green: radial-gradient(at 0% 0%, hsla(161, 84%, 48%, 0.15) 0px, transparent 50%),
+                         radial-gradient(at 100% 100%, hsla(165, 84%, 48%, 0.1) 0px, transparent 50%);
+  --gradient-header: linear-gradient(to right, #064e3b, #065f46);
+
+  /* Premium Shadows */
+  --shadow-premium: 0 40px 80px -20px rgba(6, 78, 59, 0.15), 0 20px 40px -30px rgba(0, 0, 0, 0.2);
+  --shadow-subtle: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+
+  /* Standard Border Radius */
+  --radius-premium: 2.5rem;
+  --radius-card: 2rem;
+}
+
+/* Typography Base Styles */
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    @apply bg-surface text-slate-800 font-sans antialiased;
+    @apply bg-surface text-text;
   }
 }
 
-/* Auth layout: ensure gov colors apply (left panel green, right panel surface) */
-.auth-panel-left {
-  background-color: var(--color-gov-primary);
-}
-.auth-panel-left .auth-panel-text {
-  color: rgba(255, 255, 255, 0.95);
-}
-.auth-panel-left .auth-panel-text-muted {
-  color: var(--color-gov-surface);
-  opacity: 0.9;
-}
-.auth-panel-right {
-  background-color: var(--color-gov-surface);
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Data table overrides for ERP look */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-light);
+}
+
+/* Data table overrides */
 .rdt_TableHeadRow {
-  @apply bg-slate-100 border-b border-surface-border font-semibold text-slate-700 text-xs uppercase tracking-wider;
+  @apply bg-slate-50 border-b border-border font-display font-semibold text-primary text-xs uppercase tracking-wider;
 }
 .rdt_TableRow {
-  @apply border-b border-surface-border hover:bg-slate-50;
+  @apply border-b border-border hover:bg-mint/30 transition-colors;
 }
 .rdt_Table {
-  @apply border border-surface-border rounded-lg overflow-hidden;
+  @apply border border-border rounded-card overflow-hidden shadow-subtle;
+}
+.rdt_Pagination {
+  @apply border-t border-border bg-slate-50 text-text-muted;
 }

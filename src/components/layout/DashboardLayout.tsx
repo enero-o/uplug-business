@@ -3,9 +3,9 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 
 const nav = [
-  { to: '/', label: 'Dashboard', icon: DashboardIcon },
-  { to: '/invoices', label: 'Invoices', icon: InvoicesIcon },
-  { to: '/erp', label: 'ERP Integrations', icon: ErpIcon },
+  { to: '/', label: 'Overview', icon: DashboardIcon },
+  { to: '/invoices', label: 'E-Invoicing', icon: InvoicesIcon },
+  { to: '/erp', label: 'Integrations', icon: ErpIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
@@ -65,80 +65,121 @@ export function DashboardLayout() {
   }
 
   const pageTitle =
-    location.pathname === '/'
-      ? 'Dashboard'
-      : location.pathname === '/invoices'
-        ? 'Invoices'
-        : location.pathname === '/erp'
-          ? 'ERP Integrations'
-          : location.pathname === '/settings'
-            ? 'Settings'
-            : 'Dashboard'
+    nav.find(item => item.to === location.pathname)?.label || 'Overview'
 
   return (
-    <div className="flex h-screen bg-surface overflow-hidden">
+    <div className="flex h-screen bg-surface overflow-hidden font-sans">
       {/* Sidebar */}
       <aside
-        className={`flex flex-col bg-sidebar text-slate-200 transition-all duration-200 ease-in-out ${
-          sidebarOpen ? 'w-56' : 'w-16'
-        } shrink-0 border-r border-sidebar-border`}
+        className={`flex flex-col bg-primary-dark text-white/70 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'w-64' : 'w-20'
+        } shrink-0 relative z-30 border-r border-white/5 shadow-2xl`}
       >
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
-          {sidebarOpen && (
-            <span className="font-semibold text-white tracking-tight">Uplug</span>
+        {/* Brand */}
+        <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
+          {sidebarOpen ? (
+            <div className="flex items-center gap-3 animate-fade-in">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-premium">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="font-display font-bold text-xl text-white tracking-tight">Uplug</span>
+            </div>
+          ) : (
+            <div className="mx-auto w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-premium">
+               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded p-1.5 text-slate-400 hover:bg-sidebar-hover hover:text-white"
-            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            <ChevronLeft
-              className={`h-5 w-5 transition-transform ${sidebarOpen ? '' : 'rotate-180'}`}
-            />
-          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-8 px-3 space-y-2 custom-scrollbar">
           {nav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                `flex items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold transition-all relative group ${
                   isActive
-                    ? 'bg-sidebar-active text-white'
-                    : 'text-slate-300 hover:bg-sidebar-hover hover:text-white'
+                    ? 'bg-accent text-white shadow-lg shadow-accent/20'
+                    : 'hover:bg-white/5 hover:text-white'
                 }`
               }
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {sidebarOpen && <span>{label}</span>}
+              {sidebarOpen && <span className="animate-fade-in">{label}</span>}
+              {!sidebarOpen && (
+                 <div className="absolute left-full ml-4 px-3 py-2 bg-primary-dark text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
+                    {label}
+                 </div>
+              )}
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-sidebar-border p-2">
+
+        {/* User / Footer */}
+        <div className="p-4 border-t border-white/5">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-sidebar-hover hover:text-red-300"
+            className="flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold transition-all hover:bg-red-500/10 hover:text-red-400 group relative"
           >
             <LogoutIcon className="h-5 w-5 shrink-0" />
-            {sidebarOpen && <span>Logout</span>}
+            {sidebarOpen && <span className="animate-fade-in">Sign out</span>}
+            {!sidebarOpen && (
+                 <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl">
+                    Sign out
+                 </div>
+              )}
           </button>
         </div>
+        
+        {/* Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="absolute -right-3 top-24 w-6 h-6 rounded-full bg-accent text-white border-2 border-primary-dark flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+        >
+          <ChevronLeft className={`h-3 w-3 transition-transform ${sidebarOpen ? '' : 'rotate-180'}`} />
+        </button>
       </aside>
 
-      {/* Main */}
-      <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-surface-border bg-surface-card px-6">
-          <h1 className="text-lg font-semibold text-slate-800">{pageTitle}</h1>
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col min-w-0 relative">
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-border bg-white px-10 relative z-20">
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-600">{user?.name ?? user?.email ?? 'User'}</span>
+            <div className="md:hidden">
+              {/* Mobile Menu Toggle */}
+            </div>
+            <h2 className="text-xl font-display font-bold text-primary">{pageTitle}</h2>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <button className="relative p-2 text-text-light hover:text-primary transition-colors">
+              <div className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-white" />
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            </button>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-3 pl-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-primary leading-none">{user?.name || 'Admin'}</p>
+                <p className="text-[10px] font-bold text-text-light uppercase tracking-widest mt-1 opacity-60">Verified Business</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-mint border border-accent/20 flex items-center justify-center text-accent font-bold text-sm shadow-subtle">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+            </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+
+        <main className="flex-1 overflow-y-auto p-10 relative z-10 custom-scrollbar">
+          <div className="max-w-6xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
