@@ -59,7 +59,7 @@ export function Register() {
             </svg>
           </div>
           <h2 className="mt-10 text-4xl font-display font-bold text-white tracking-tight leading-tight">
-            Start your journey with <span className="text-accent">Uplug.</span>
+            Start your journey with <span className="text-accent">AARC.</span>
           </h2>
           <p className="mt-6 text-mint/80 text-lg max-w-sm font-light">
             Certify your business for international and domestic E-Invoicing standards in minutes.

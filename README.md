@@ -1,6 +1,6 @@
-# Uplug Business Dashboard
+# AARC Business Dashboard
 
-ERP-style business dashboard for the Uplug e-invoicing platform. Built with Vite, React, React Query, Tailwind CSS, and DataTables for interacting with the backend.
+ERP-style business dashboard for the aarc e-invoicing platform. Built with Vite, React, React Query, Tailwind CSS, and DataTables for interacting with the backend.
 
 ## Stack
 

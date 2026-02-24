@@ -161,7 +161,7 @@ export function Login() {
 
             <div className="mt-10 pt-8 border-t border-border">
               <p className="text-center text-sm text-text-light font-medium">
-                New to Uplug Business?{' '}
+                New to AARC Business?{' '}
                 <Link to="/register" className="font-bold text-accent hover:text-accent-dark transition-colors">
                   Create an account
                 </Link>
@@ -170,7 +170,7 @@ export function Login() {
           </div>
           
           <p className="mt-8 text-center text-xs text-text-light/60 font-medium">
-            Secure, encrypted connection by AARC. &copy; 2026 Uplug Inc.
+            Secure, encrypted connection by AARC. &copy; 2026 AARC Inc.
           </p>
         </div>
       </div>

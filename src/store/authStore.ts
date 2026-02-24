@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => set({ token: null, user: null, onboarded: false, businessProfile: null }),
     }),
     { 
-      name: 'uplug-auth', 
+      name: 'aarc-auth', 
       partialize: (s) => ({ 
         token: s.token, 
         user: s.user, 

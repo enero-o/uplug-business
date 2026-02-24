@@ -84,7 +84,7 @@ export function DashboardLayout() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="font-display font-bold text-xl text-white tracking-tight">Uplug</span>
+              <span className="font-display font-bold text-xl text-white tracking-tight">AARC</span>
             </div>
           ) : (
             <div className="mx-auto w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-premium">
